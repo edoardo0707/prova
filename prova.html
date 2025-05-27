@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Couple Sync</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #ffe0ec;
+      text-align: center;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      font-size: 1rem;
+      padding: 1rem;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 10px;
+      background: #ff5c8a;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Couple Shared Note 💞</h1>
+  
+  <div id="start">
+    <p>Copia questo link e invialo al tuo partner:</p>
+    <input type="text" id="shareLink" readonly style="width:100%;padding:0.5rem;">
+    <button onclick="copyLink()">📋 Copia Link</button>
+  </div>
+
+  <div id="sharedArea" class="hidden">
+    <p>Testo sincronizzato:</p>
+    <textarea id="sharedText" placeholder="Scrivete qui..."></textarea>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // 1. CONFIGURA FIREBASE QUI:
+    const firebaseConfig = {
+        apiKey: "AIzaSyDY0aeJQiMUrJ3h_gdtvCCypQVd_PIn650",
+        authDomain: "lista-di-coppia.firebaseapp.com",
+        projectId: "lista-di-coppia",
+        storageBucket: "lista-di-coppia.firebasestorage.app",
+        messagingSenderId: "588955586283",
+        appId: "1:588955586283:web:d40e9adc9845ff2f0338ae",
+        measurementId: "G-KS8SM2Q0E9"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 2. GESTIONE DEL CODICE DI COPPIA
+    const urlParams = new URLSearchParams(window.location.search);
+    let coupleCode = urlParams.get('code');
+
+    const shareLinkInput = document.getElementById("shareLink");
+    const startDiv = document.getElementById("start");
+    const sharedDiv = document.getElementById("sharedArea");
+    const textArea = document.getElementById("sharedText");
+
+    if (!coupleCode) {
+      coupleCode = Math.random().toString(36).substring(2, 8);
+      const newUrl = `${window.location.origin}${window.location.pathname}?code=${coupleCode}`;
+      shareLinkInput.value = newUrl;
+      startDiv.classList.remove("hidden");
+    } else {
+      startDiv.classList.add("hidden");
+      sharedDiv.classList.remove("hidden");
+
+      const docRef = db.collection("couples").doc(coupleCode);
+
+      // Sync in tempo reale
+      docRef.onSnapshot(doc => {
+        const data = doc.data();
+        if (data && data.text !== textArea.value) {
+          textArea.value = data.text;
+        }
+      });
+
+      // Aggiorna su Firestore
+      textArea.addEventListener("input", () => {
+        docRef.set({ text: textArea.value });
+      });
+    }
+
+    function copyLink() {
+      shareLinkInput.select();
+      document.execCommand("copy");
+      alert("Link copiato!");
+    }
+  </script>
+</body>
+</html>
