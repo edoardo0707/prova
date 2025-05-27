@@ -76,8 +76,8 @@
     if (!coupleCode) {
       coupleCode = Math.random().toString(36).substring(2, 8);
       const newUrl = `${window.location.origin}${window.location.pathname}?code=${coupleCode}`;
-      shareLinkInput.value = newUrl;
-      startDiv.classList.remove("hidden");
+      // 🔁 Reindirizza automaticamente al link con code
+      window.location.href = newUrl;
     } else {
       startDiv.classList.add("hidden");
       sharedDiv.classList.remove("hidden");
