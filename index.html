@@ -29,15 +29,23 @@
       cursor: pointer;
     }
     .hidden { display: none; }
+    input[type=text] {
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
   <h1>Couple Shared Note 💞</h1>
   
   <div id="start">
-    <p>Copia questo link e invialo al tuo partner:</p>
-    <input type="text" id="shareLink" readonly style="width:100%;padding:0.5rem;">
-    <button onclick="copyLink()">📋 Copia Link</button>
+    <p>Cosa vuoi fare?</p>
+    <button onclick="createNewCouple()">💌 Crea nuova coppia</button>
+    <p>oppure</p>
+    <input type="text" id="codeInput" placeholder="Incolla codice coppia o link..." />
+    <button onclick="joinCouple()">🔗 Unisciti</button>
   </div>
 
   <div id="sharedArea" class="hidden">
@@ -52,39 +60,31 @@
   <script>
     // 1. CONFIGURA FIREBASE QUI:
     const firebaseConfig = {
-        apiKey: "AIzaSyDY0aeJQiMUrJ3h_gdtvCCypQVd_PIn650",
-        authDomain: "lista-di-coppia.firebaseapp.com",
-        projectId: "lista-di-coppia",
-        storageBucket: "lista-di-coppia.firebasestorage.app",
-        messagingSenderId: "588955586283",
-        appId: "1:588955586283:web:d40e9adc9845ff2f0338ae",
-        measurementId: "G-KS8SM2Q0E9"
+      apiKey: "TUO_API_KEY",
+      authDomain: "TUO_DOMINIO.firebaseapp.com",
+      projectId: "TUO_PROJECT_ID",
+      storageBucket: "TUO_BUCKET.appspot.com",
+      messagingSenderId: "NUMERO",
+      appId: "ID_APP"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 2. GESTIONE DEL CODICE DI COPPIA
     const urlParams = new URLSearchParams(window.location.search);
     let coupleCode = urlParams.get('code');
 
-    const shareLinkInput = document.getElementById("shareLink");
     const startDiv = document.getElementById("start");
     const sharedDiv = document.getElementById("sharedArea");
     const textArea = document.getElementById("sharedText");
 
-    if (!coupleCode) {
-      coupleCode = Math.random().toString(36).substring(2, 8);
-      const newUrl = `${window.location.origin}${window.location.pathname}?code=${coupleCode}`;
-      // 🔁 Reindirizza automaticamente al link con code
-      window.location.href = newUrl;
-    } else {
+    // Se è presente un codice, entra nella coppia
+    if (coupleCode) {
       startDiv.classList.add("hidden");
       sharedDiv.classList.remove("hidden");
 
       const docRef = db.collection("couples").doc(coupleCode);
 
-      // Sync in tempo reale
       docRef.onSnapshot(doc => {
         const data = doc.data();
         if (data && data.text !== textArea.value) {
@@ -92,17 +92,39 @@
         }
       });
 
-      // Aggiorna su Firestore
       textArea.addEventListener("input", () => {
         docRef.set({ text: textArea.value });
       });
     }
 
-    function copyLink() {
-      shareLinkInput.select();
-      document.execCommand("copy");
-      alert("Link copiato!");
+    // Funzione per creare una nuova coppia
+    function createNewCouple() {
+      const newCode = Math.random().toString(36).substring(2, 8);
+      const newUrl = `${window.location.origin}${window.location.pathname}?code=${newCode}`;
+      window.location.href = newUrl;
+    }
+
+    // Funzione per unire alla coppia con codice
+    function joinCouple() {
+      const input = document.getElementById("codeInput").value.trim();
+      let code = "";
+
+      // Se incolla direttamente l'URL
+      if (input.includes("?code=")) {
+        const parsed = new URL(input);
+        code = new URLSearchParams(parsed.search).get("code");
+      } else {
+        code = input;
+      }
+
+      if (code.length >= 4) {
+        const newUrl = `${window.location.origin}${window.location.pathname}?code=${code}`;
+        window.location.href = newUrl;
+      } else {
+        alert("Codice non valido");
+      }
     }
   </script>
 </body>
 </html>
+
